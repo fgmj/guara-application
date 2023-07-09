@@ -1,0 +1,2 @@
+org.springframework.test.context.ContextCustomizerFactory=\
+br.com.supergas.guara.config.SqlTestContainersSpringContextCustomizerFactory
