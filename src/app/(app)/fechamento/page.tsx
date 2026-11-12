@@ -26,7 +26,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
   return (
     <div className="mx-auto max-w-6xl space-y-3">
       <Titulo extra={<><FilialSelect filiais={ctx.filiais} atual={sel} todas /><MesNav base="/fechamento" mes={mes} atual={mesAtual} /></>}>Fechamento</Titulo>
-      <Bloco titulo="Resumo diário" nota="Diferença = vendas + vales recebidos − caixa. Toque no dia para ver ou corrigir os lançamentos.">
+      <Bloco titulo="Resumo diário" nota="Diferença = vendas + vales recebidos − caixa. Toque no dia para abrir o relatório completo.">
         <div className="overflow-x-auto">
           <table className="w-full text-[13px] tabular-nums">
             <thead>
@@ -42,7 +42,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
                 const ruim = d.temMovimento && d.situacao !== "ok";
                 return (
                   <tr key={d.dia} className={`border-t border-stone-100 text-right whitespace-nowrap ${ruim ? "bg-red-50" : ""}`}>
-                    <td className="py-1 text-left"><Link href={`/lancar?d=${d.dia}`} className="text-brand underline">{fmtDiaCurto(d.dia)}</Link></td>
+                    <td className="py-1 text-left"><Link href={`/dia?d=${d.dia}`} className="text-brand underline">{fmtDiaCurto(d.dia)}</Link></td>
                     <td className="px-1.5">{d.inicial}</td><td className="px-1.5">{d.compra || ""}</td><td className="px-1.5 font-semibold">{d.venda || ""}</td><td className="px-1.5">{d.final}</td>
                     <td className="px-1.5">{d.valorMedio ? brl(d.valorMedio) : ""}</td><td className="px-1.5">{brl(d.vendaTotal)}</td><td className="px-1.5">{d.valesRecebidos ? brl(d.valesRecebidos) : ""}</td>
                     <td className="px-1.5">{brl(d.caixa)}</td><td className={`px-1.5 ${ruim ? "font-semibold text-red-700" : ""}`}>{brl(d.diferenca)}</td>

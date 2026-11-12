@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { escolherFilial } from "@/app/(app)/lancar/actions";
+import { botaoSecCls } from "@/components/estilos";
 
 export function Chips<T extends string>({
   opcoes,
@@ -46,15 +47,6 @@ export function Campo({ rotulo, children, className = "" }: { rotulo: string; ch
   );
 }
 
-export const inputCls =
-  "h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-base text-stone-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:bg-stone-100";
-
-export const botaoCls =
-  "h-11 rounded-lg bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50";
-
-export const botaoSecCls =
-  "h-11 rounded-lg border border-stone-300 bg-white px-4 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50";
-
 export function FilialSelect({
   filiais,
   atual,
@@ -81,4 +73,26 @@ export function FilialSelect({
       ))}
     </select>
   );
+}
+
+/** Navegação por dia: anterior, seletor de data, próximo. `base` recebe ?d=AAAA-MM-DD. */
+export function DiaNav({ base, dia, hoje, minimo, rotulo }: { base: string; dia: string; hoje: string; minimo?: string; rotulo: string }) {
+  const router = useRouter();
+  const ir = (d: string) => router.push(d === hoje ? base : `${base}?d=${d}`);
+  const soma = (n: number) => { const x = new Date(`${dia}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+  const b = "size-10 rounded-lg border border-stone-300 bg-white text-lg disabled:opacity-30";
+  return (
+    <div className="flex items-center gap-1 print:hidden">
+      <button type="button" aria-label="Dia anterior" disabled={!!minimo && dia <= minimo} onClick={() => ir(soma(-1))} className={b}>‹</button>
+      <label className="relative">
+        <span className="flex h-10 items-center rounded-lg border border-stone-300 bg-white px-3 text-sm font-semibold whitespace-nowrap">{rotulo}</span>
+        <input type="date" aria-label="Data" value={dia} min={minimo} max={hoje} onChange={(e) => e.target.value && ir(e.target.value)} className="absolute inset-0 cursor-pointer opacity-0" />
+      </label>
+      <button type="button" aria-label="Próximo dia" disabled={dia >= hoje} onClick={() => ir(soma(1))} className={b}>›</button>
+    </div>
+  );
+}
+
+export function Imprimir() {
+  return <button type="button" onClick={() => window.print()} className={`${botaoSecCls} h-10 print:hidden`}>Imprimir</button>;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { botaoCls, inputCls } from "@/components/ui";
+import { botaoCls, inputCls } from "@/components/estilos";
 import { importarPlanilha } from "./actions";
 
 export function FormImportar({ filiais }: { filiais: { id: string; nome: string }[] }) {

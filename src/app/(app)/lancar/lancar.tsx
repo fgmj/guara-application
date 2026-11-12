@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { Campo, Chips, botaoCls, botaoSecCls, inputCls } from "@/components/ui";
+import { Campo, Chips } from "@/components/ui";
+import { botaoCls, botaoSecCls, inputCls } from "@/components/estilos";
 import { fmtDia, fmtDiaCurto, somaDias } from "@/lib/datas";
 import { brl, parseValor } from "@/lib/dinheiro";
 import { SITUACAO_TEXTO, TOLERANCIA } from "@/lib/caixa";
@@ -52,19 +54,31 @@ function useEnvio() {
   const router = useRouter();
   const [pendente, start] = useTransition();
   const [erro, setErro] = useState("");
-  const enviar = (acao: () => Promise<Resultado>, depois?: () => void) =>
+  const [feito, setFeito] = useState("");
+  useEffect(() => {
+    if (!feito) return;
+    const t = setTimeout(() => setFeito(""), 2500);
+    return () => clearTimeout(t);
+  }, [feito]);
+  const enviar = (acao: () => Promise<Resultado>, depois?: () => void, msg = "") =>
     start(async () => {
       const r = await acao();
-      if ("erro" in r) return setErro(r.erro);
+      if ("erro" in r) { setFeito(""); return setErro(r.erro); }
       setErro("");
+      setFeito(msg);
       depois?.();
       router.refresh();
     });
-  return { pendente, erro, enviar };
+  return { pendente, erro, feito, enviar };
 }
 
 function Erro({ msg }: { msg: string }) {
   return msg ? <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{msg}</p> : null;
+}
+
+/** Confirmação discreta, lida por leitores de tela, que some sozinha. */
+function Feito({ msg }: { msg: string }) {
+  return <p role="status" aria-live="polite" className={`text-sm font-medium text-emerald-700 transition-opacity ${msg ? "opacity-100" : "h-0 opacity-0"}`}>{msg && `✓ ${msg}`}</p>;
 }
 
 function Sugestoes({ id, itens }: { id: string; itens: string[] }) {
@@ -119,12 +133,15 @@ function useLembrar<T>(chave: string, inicial: T): [T, (v: T) => void] {
 /* ---------------------------------- Vendas --------------------------------- */
 
 function Vendas({ d }: { d: Dados }) {
-  const { pendente, erro, enviar } = useEnvio();
+  const { pendente, erro, feito, enviar } = useEnvio();
+  const [maisProdutos, setMaisProdutos] = useState(false);
   const [sel, setSel] = useLembrar(`venda-${d.filialId}`, { entregadorId: "", categoriaId: "", produtoId: "" });
   const nome = (xs: Item[], id: string | null) => xs.find((x) => x.id === id)?.nome ?? "—";
   const entregadorId = d.entregadores.some((e) => e.id === sel.entregadorId) ? sel.entregadorId : "";
   const categoriaId = d.categorias.some((c) => c.id === sel.categoriaId) ? sel.categoriaId : (d.categorias[0]?.id ?? "");
   const produto = d.produtos.find((p) => p.id === sel.produtoId) ?? d.produtos[0];
+  // botijões cheios ficam sempre à mão; vasilhames e outros aparecem ao pedir (ou se já estiver selecionado)
+  const principais = maisProdutos ? d.produtos : d.produtos.filter((p) => p.tipo === "GAS" || p.id === produto?.id);
   const [qtd, setQtd] = useState("");
   const [preco, setPreco] = useState("");
   const qtdRef = useRef<HTMLInputElement>(null);
@@ -148,6 +165,7 @@ function Vendas({ d }: { d: Dados }) {
     enviar(
       () => addVenda({ filialId: d.filialId, dia: d.dia, categoriaId, entregadorId: entregadorId || null, produtoId: produto.id, quantidade: qtd, valorUnit: preco }),
       () => { setQtd(""); qtdRef.current?.focus(); },
+      `${qtd} × ${produto.nome} lançado`,
     );
   }
 
@@ -160,7 +178,12 @@ function Vendas({ d }: { d: Dados }) {
               <Chips rotulo="Entregador" opcoes={d.entregadores} valor={entregadorId || null} onChange={(v) => setSel({ ...sel, entregadorId: v })} />
             )}
             <Chips rotulo="Categoria" opcoes={d.categorias} valor={categoriaId} onChange={(v) => setSel({ ...sel, categoriaId: v })} />
-            <Chips rotulo="Produto" opcoes={d.produtos} valor={produto?.id ?? null} onChange={(v) => { setSel({ ...sel, produtoId: v }); setPreco(""); }} />
+            <div className="flex flex-wrap items-start gap-1.5">
+              <Chips rotulo="Produto" opcoes={principais} valor={produto?.id ?? null} onChange={(v) => { setSel({ ...sel, produtoId: v }); setPreco(""); }} />
+              {principais.length < d.produtos.length && (
+                <button type="button" onClick={() => setMaisProdutos(true)} className="min-h-10 rounded-full border border-dashed border-stone-300 px-3.5 text-sm text-stone-500 hover:border-brand hover:text-brand">+ outros produtos</button>
+              )}
+            </div>
             <div className="flex flex-wrap items-end gap-2">
               <Campo rotulo="Quantidade" className="w-24">
                 <input ref={qtdRef} autoFocus inputMode="numeric" value={qtd} onChange={(e) => setQtd(e.target.value.replace(/\D/g, ""))} className={`${inputCls} text-center text-lg font-semibold`} />
@@ -183,6 +206,7 @@ function Vendas({ d }: { d: Dados }) {
               </div>
             )}
             <Erro msg={erro} />
+            <Feito msg={feito} />
           </form>
         </Cartao>
       )}
@@ -210,7 +234,7 @@ function Vendas({ d }: { d: Dados }) {
 /* --------------------------------- Compras --------------------------------- */
 
 function Compras({ d }: { d: Dados }) {
-  const { pendente, erro, enviar } = useEnvio();
+  const { pendente, erro, feito, enviar } = useEnvio();
   const estoque = d.produtos.filter((p) => p.tipo !== "OUTRO");
   const [produtoId, setProdutoId] = useState(estoque[0]?.id ?? "");
   const produto = d.produtos.find((p) => p.id === produtoId);
@@ -226,6 +250,7 @@ function Compras({ d }: { d: Dados }) {
     enviar(
       () => addCompra({ filialId: d.filialId, dia: d.dia, produtoId, quantidade: qtd, valor: valor || sugerido || "0", fornecedor: f.fornecedor, pagamento: f.pagamento, vencimento: venc, nota }),
       () => { setQtd(""); setValor(""); setNota(""); },
+      "Compra lançada",
     );
   }
 
@@ -259,6 +284,7 @@ function Compras({ d }: { d: Dados }) {
             <Sugestoes id="sug-forn" itens={d.sugestoes.fornecedores} />
             <button disabled={pendente || !qtd} className={`${botaoCls} w-full`}>Lançar compra</button>
             <Erro msg={erro} />
+            <Feito msg={feito} />
           </form>
         </Cartao>
       )}
@@ -285,7 +311,7 @@ function Compras({ d }: { d: Dados }) {
 /* ---------------------------------- Vales ---------------------------------- */
 
 function Vales({ d }: { d: Dados }) {
-  const { pendente, erro, enviar } = useEnvio();
+  const { pendente, erro, feito, enviar } = useEnvio();
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("");
   const doDia = d.vales.filter((v) => v.dia === d.dia);
@@ -294,9 +320,9 @@ function Vales({ d }: { d: Dados }) {
 
   function salvar(e: React.FormEvent) {
     e.preventDefault();
-    enviar(() => addVale({ filialId: d.filialId, dia: d.dia, descricao, valor }), () => { setDescricao(""); setValor(""); });
+    enviar(() => addVale({ filialId: d.filialId, dia: d.dia, descricao, valor }), () => { setDescricao(""); setValor(""); }, "Vale lançado");
   }
-  const receber = (id: string, como: "CAIXA" | "CONTA" | "DESCONTO" | null) => enviar(() => receberVale(id, d.dia, como));
+  const receber = (id: string, como: "CAIXA" | "CONTA" | "DESCONTO" | null) => enviar(() => receberVale(id, d.dia, como), undefined, como ? "Vale recebido" : "Recebimento desfeito");
 
   const Receber = ({ id }: { id: string }) =>
     d.podeEditar ? (
@@ -328,6 +354,7 @@ function Vales({ d }: { d: Dados }) {
         </Cartao>
       )}
       <Erro msg={erro} />
+      <Feito msg={feito} />
       <Cartao titulo="Vales lançados no dia" extra={brl(doDia.reduce((s, v) => s + v.valor, 0))}>
         {doDia.length === 0 && <p className="text-sm text-stone-500">Nenhum vale neste dia.</p>}
         <ul>
@@ -373,7 +400,7 @@ function Vales({ d }: { d: Dados }) {
 /* --------------------------------- Despesas -------------------------------- */
 
 function Despesas({ d }: { d: Dados }) {
-  const { pendente, erro, enviar } = useEnvio();
+  const { pendente, erro, feito, enviar } = useEnvio();
   const [f, setF] = useState({ descricao: "", valor: "", subcategoria: "", placa: "", km: "" });
   const [categoriaId, setCategoriaId] = useState("");
   const [origem, setOrigem] = useState<"CAIXA" | "CARTAO" | "CONTA">("CAIXA");
@@ -385,6 +412,7 @@ function Despesas({ d }: { d: Dados }) {
     enviar(
       () => addDespesa({ filialId: d.filialId, dia: d.dia, categoriaId, origem, ...f, placa: veiculo ? f.placa : "", km: veiculo ? f.km : "" }),
       () => setF({ descricao: "", valor: "", subcategoria: "", placa: f.placa, km: "" }),
+      "Despesa lançada",
     );
   }
 
@@ -419,6 +447,7 @@ function Despesas({ d }: { d: Dados }) {
             <Sugestoes id="sug-placa" itens={d.sugestoes.placas} />
             <button disabled={pendente || !f.descricao || !f.valor || !categoriaId} className={`${botaoCls} w-full`}>Lançar despesa</button>
             <Erro msg={erro} />
+            <Feito msg={feito} />
           </form>
         </Cartao>
       )}
@@ -444,7 +473,7 @@ function Despesas({ d }: { d: Dados }) {
 /* ---------------------------------- Caixa ---------------------------------- */
 
 function Caixa({ d }: { d: Dados }) {
-  const { pendente, erro, enviar } = useEnvio();
+  const { pendente, erro, feito, enviar } = useEnvio();
   const r = d.resumo;
   const [itens, setItens] = useState<Record<string, string>>(() =>
     Object.fromEntries(d.formas.map((f) => [f.id, r.formas[f.id] ? String(r.formas[f.id]).replace(".", ",") : ""])),
@@ -455,7 +484,7 @@ function Caixa({ d }: { d: Dados }) {
   const dif = r.esperado - caixa;
   const situacao = Math.abs(dif) <= TOLERANCIA ? "ok" : dif > 0 ? "falta" : "sobra";
   const gas = d.produtos.filter((p) => p.tipo === "GAS");
-  const salvar = (fechar: boolean) => enviar(() => salvarCaixa({ filialId: d.filialId, dia: d.dia, itens, fechar, obs }));
+  const salvar = (fechar: boolean) => enviar(() => salvarCaixa({ filialId: d.filialId, dia: d.dia, itens, fechar, obs }), undefined, fechar ? "Caixa fechado" : "Caixa salvo");
 
   const porCategoria = d.categorias
     .map((c) => {
@@ -532,6 +561,7 @@ function Caixa({ d }: { d: Dados }) {
           </>
         )}
         <Erro msg={erro} />
+        <Feito msg={feito} />
       </Cartao>
     </div>
   );
@@ -564,6 +594,10 @@ export function Lancar({ d, seletor }: { d: Dados; seletor: React.ReactNode }) {
         <div className="rounded-xl bg-white p-2 ring-1 ring-stone-200"><p className="text-xs text-stone-500">Vendido</p><p className="font-semibold tabular-nums">{brl(d.resumo.vendaTotal)}</p></div>
         <div className="rounded-xl bg-white p-2 ring-1 ring-stone-200"><p className="text-xs text-stone-500">{principal?.nome ?? "Botijões"} vendidos</p><p className="font-semibold tabular-nums">{d.resumo.venda}</p></div>
         <div className="rounded-xl bg-white p-2 ring-1 ring-stone-200"><p className="text-xs text-stone-500">{principal?.nome ?? "Botijões"} cheios</p><p className="font-semibold tabular-nums">{d.resumo.final}</p></div>
+      </div>
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${d.fechado ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>{d.fechado ? "Caixa fechado" : "Caixa aberto"}</span>
+        <Link href={d.dia === d.hoje ? "/dia" : `/dia?d=${d.dia}`} className="font-medium text-brand underline">Ver relatório do dia</Link>
       </div>
       <div role="tablist" className="flex gap-1 overflow-x-auto rounded-xl bg-stone-200/70 p-1">
         {ABAS.map((a) => (

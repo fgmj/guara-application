@@ -62,7 +62,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ m
           <ul className="text-sm">
             {pendencias.slice(-8).reverse().map((d) => (
               <li key={d.dia} className="flex justify-between border-t border-stone-100 py-1 first:border-0">
-                <Link href={`/lancar?d=${d.dia}`} className="text-brand underline">{d.dia.slice(8)}/{d.dia.slice(5, 7)}</Link>
+                <Link href={`/dia?d=${d.dia}`} className="text-brand underline">{d.dia.slice(8)}/{d.dia.slice(5, 7)}</Link>
                 <span className="text-stone-500">{d.situacao === "falta" ? "falta no caixa" : "sobra no caixa"}</span>
                 <span className="font-medium text-red-700 tabular-nums">{brl(Math.abs(d.diferenca))}</span>
               </li>

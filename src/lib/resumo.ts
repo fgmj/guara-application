@@ -12,6 +12,7 @@ export type ProdutoInfo = {
   baseId: string | null;
   custo: number;
   precos: number[];
+  ativo: boolean;
 };
 
 export async function listarProdutos(apenasAtivos = true): Promise<ProdutoInfo[]> {
@@ -25,6 +26,7 @@ export async function listarProdutos(apenasAtivos = true): Promise<ProdutoInfo[]
     tipo: p.tipo,
     baseId: p.baseId,
     custo: Number(p.custo),
+    ativo: p.ativo,
     precos: p.precos
       .split(/[;\s]+/)
       .map((x) => Number(x.replace(",", ".")))

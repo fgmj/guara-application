@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { exigirGestor, filialAtual } from "@/lib/contexto";
 import { ROLE_LABELS } from "@/lib/roles";
 import { Titulo } from "@/components/relatorio";
-import { FilialSelect, botaoCls, botaoSecCls, inputCls } from "@/components/ui";
+import { FilialSelect } from "@/components/ui";
+import { botaoCls, botaoSecCls, inputCls } from "@/components/estilos";
 import { salvarCadastro } from "./actions";
 
 export const metadata = { title: "Cadastros · Guará" };

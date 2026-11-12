@@ -13,6 +13,7 @@ export type AppModule = { href: string; label: string; gestor: boolean };
 export const MODULES: readonly AppModule[] = [
   { href: "/painel", label: "Painel", gestor: true },
   { href: "/lancar", label: "Lançamentos", gestor: false },
+  { href: "/dia", label: "Relatório do dia", gestor: false },
   { href: "/fechamento", label: "Fechamento", gestor: true },
   { href: "/relatorios", label: "Relatórios", gestor: true },
   { href: "/estoque", label: "Estoque", gestor: true },
@@ -29,11 +30,11 @@ export function homeFor(role: Role | undefined): string {
   return isGestor(role) ? "/painel" : "/lancar";
 }
 
-/** Funcionário acessa apenas /lancar e /conta; gestor acessa tudo. */
+/** Funcionário acessa apenas /lancar, /dia e /conta; gestor acessa tudo. */
 export function canAccessPath(role: Role | undefined, pathname: string): boolean {
   if (!role) return false;
   if (isGestor(role)) return true;
-  return ["/lancar", "/conta"].some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  return ["/lancar", "/dia", "/conta"].some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 export function modulesFor(role: Role | undefined): AppModule[] {

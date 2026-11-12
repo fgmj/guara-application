@@ -4,7 +4,8 @@ import { fmtDia, hoje, paraDia } from "@/lib/datas";
 import { brl } from "@/lib/dinheiro";
 import { listarProdutos, resumoDias } from "@/lib/resumo";
 import { Bloco, Titulo } from "@/components/relatorio";
-import { FilialSelect, botaoCls, inputCls } from "@/components/ui";
+import { FilialSelect } from "@/components/ui";
+import { botaoCls, inputCls } from "@/components/estilos";
 import { marcarCompraPaga, salvarContagem } from "./actions";
 
 export const metadata = { title: "Estoque · Guará" };
