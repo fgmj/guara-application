@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --color-brand: #b45309;
+  --color-brand-dark: #92400e;
+}
+
+body {
+  @apply bg-stone-50 text-stone-900 font-sans;
+}
