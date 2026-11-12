@@ -28,6 +28,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-guara}:${POSTGRES_PASSWORD:-guara}@db:5432/${POSTGRES_DB:-guara}?schema=public
       AUTH_SECRET: ${AUTH_SECRET:?defina AUTH_SECRET}
       AUTH_TRUST_HOST: "true"
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
     ports:
       - "127.0.0.1:${APP_PORT:-3000}:3000" # exposto só via Cloudflare Tunnel
 
