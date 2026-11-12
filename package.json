@@ -34,12 +34,11 @@
     "eslint-config-next": "15.5.29",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
-    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^3.2.7"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "node prisma/seed.mjs"
   },
   "engines": {
     "node": ">=22"

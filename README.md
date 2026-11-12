@@ -44,7 +44,7 @@ As regras ficam em `src/lib/roles.ts` e são aplicadas no middleware.
 ```bash
 export AUTH_SECRET=$(openssl rand -base64 32) POSTGRES_PASSWORD=<senha-forte>
 docker compose --profile app up -d --build
-docker compose exec app node node_modules/prisma/build/index.js db seed   # opcional, 1ª vez
+docker compose exec -e SEED_ADMIN_EMAIL=admin@seudominio -e SEED_ADMIN_PASSWORD=<senha> app node prisma/seed.mjs   # 1ª vez
 ```
 
 O container aplica as migrations pendentes ao iniciar e escuta na porta 3000 — coloque um proxy com HTTPS (Caddy/Nginx) na frente.

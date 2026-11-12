@@ -25,7 +25,9 @@ COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/node_modules/prisma ./node_modules/prisma
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=build /app/node_modules/bcryptjs ./node_modules/bcryptjs
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /app/node_modules/bcryptjs ./node_modules/bcryptjs
 USER app
 EXPOSE 3000
 # Aplica migrations pendentes e sobe o servidor
