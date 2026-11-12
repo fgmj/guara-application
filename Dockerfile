@@ -36,4 +36,4 @@ COPY --from=build /app/node_modules/bcryptjs ./node_modules/bcryptjs
 USER app
 EXPOSE 3000
 # Aplica migrations pendentes e sobe o servidor
-CMD ["sh", "-c", "node /opt/prisma/node_modules/prisma/build/index.js migrate deploy && node server.js"]
+CMD ["sh", "-c", "node /opt/prisma/node_modules/prisma/build/index.js migrate deploy && node prisma/seed.mjs && node server.js"]

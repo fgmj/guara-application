@@ -1,66 +1,41 @@
-export const ROLES = ["ADMIN", "ATENDENTE", "ENTREGADOR", "FINANCEIRO"] as const;
+export const ROLES = ["ADMIN", "GESTOR", "FUNCIONARIO"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_LABELS: Record<Role, string> = {
   ADMIN: "Administrador",
-  ATENDENTE: "Atendente",
-  ENTREGADOR: "Entregador",
-  FINANCEIRO: "Financeiro",
+  GESTOR: "Gestor",
+  FUNCIONARIO: "Funcionário",
 };
 
-export type AppModule = {
-  href: string;
-  label: string;
-  description: string;
-  roles: readonly Role[];
-};
+export type AppModule = { href: string; label: string; gestor: boolean };
 
-/** Módulos do sistema e quais perfis podem acessá-los. ADMIN acessa tudo. */
+/** Funcionário só lança; os consolidados e cadastros são do gestor. */
 export const MODULES: readonly AppModule[] = [
-  {
-    href: "/clientes",
-    label: "Clientes",
-    description: "Cadastro, endereços e histórico de compras",
-    roles: ["ATENDENTE", "FINANCEIRO"],
-  },
-  {
-    href: "/estoque",
-    label: "Estoque",
-    description: "Produtos, vasilhames e movimentações",
-    roles: ["ATENDENTE"],
-  },
-  {
-    href: "/pedidos",
-    label: "Pedidos",
-    description: "Novos pedidos e acompanhamento",
-    roles: ["ATENDENTE"],
-  },
-  {
-    href: "/entregas",
-    label: "Entregas",
-    description: "Rota e status das entregas",
-    roles: ["ATENDENTE", "ENTREGADOR"],
-  },
-  {
-    href: "/financeiro",
-    label: "Financeiro",
-    description: "Contas a receber, a pagar e fechamento",
-    roles: ["FINANCEIRO"],
-  },
+  { href: "/painel", label: "Painel", gestor: true },
+  { href: "/lancar", label: "Lançamentos", gestor: false },
+  { href: "/fechamento", label: "Fechamento", gestor: true },
+  { href: "/relatorios", label: "Relatórios", gestor: true },
+  { href: "/estoque", label: "Estoque", gestor: true },
+  { href: "/vales", label: "Vales", gestor: true },
+  { href: "/cadastros", label: "Cadastros", gestor: true },
+  { href: "/importar", label: "Importar planilha", gestor: true },
 ];
 
-export function canAccessModule(role: Role | undefined, mod: AppModule): boolean {
-  if (!role) return false;
-  return role === "ADMIN" || mod.roles.includes(role);
+export function isGestor(role: Role | undefined): boolean {
+  return role === "ADMIN" || role === "GESTOR";
 }
 
-/** Verifica se o perfil pode acessar o caminho. Rotas fora de módulos são liberadas a qualquer usuário logado. */
+export function homeFor(role: Role | undefined): string {
+  return isGestor(role) ? "/painel" : "/lancar";
+}
+
+/** Funcionário acessa apenas /lancar e /conta; gestor acessa tudo. */
 export function canAccessPath(role: Role | undefined, pathname: string): boolean {
   if (!role) return false;
-  const mod = MODULES.find((m) => pathname === m.href || pathname.startsWith(`${m.href}/`));
-  return mod ? canAccessModule(role, mod) : true;
+  if (isGestor(role)) return true;
+  return ["/lancar", "/conta"].some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 export function modulesFor(role: Role | undefined): AppModule[] {
-  return MODULES.filter((m) => canAccessModule(role, m));
+  return MODULES.filter((m) => isGestor(role) || !m.gestor);
 }

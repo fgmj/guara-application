@@ -1,29 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { canAccessPath, modulesFor, MODULES } from "./roles";
+import { canAccessPath, homeFor, modulesFor } from "./roles";
 
-describe("controle de acesso por perfil", () => {
-  it("admin acessa todos os módulos", () => {
-    expect(modulesFor("ADMIN")).toHaveLength(MODULES.length);
+describe("perfis", () => {
+  it("gestor e admin acessam tudo", () => {
+    for (const r of ["ADMIN", "GESTOR"] as const) {
+      expect(canAccessPath(r, "/painel")).toBe(true);
+      expect(canAccessPath(r, "/relatorios")).toBe(true);
+      expect(homeFor(r)).toBe("/painel");
+    }
   });
-
-  it("entregador só vê entregas", () => {
-    expect(modulesFor("ENTREGADOR").map((m) => m.href)).toEqual(["/entregas"]);
-    expect(canAccessPath("ENTREGADOR", "/financeiro")).toBe(false);
-    expect(canAccessPath("ENTREGADOR", "/entregas/123")).toBe(true);
+  it("funcionário só lança", () => {
+    expect(canAccessPath("FUNCIONARIO", "/lancar")).toBe(true);
+    expect(canAccessPath("FUNCIONARIO", "/conta")).toBe(true);
+    for (const p of ["/", "/painel", "/relatorios", "/fechamento", "/estoque", "/cadastros", "/lancarx"]) {
+      expect(canAccessPath("FUNCIONARIO", p)).toBe(false);
+    }
+    expect(modulesFor("FUNCIONARIO").map((m) => m.href)).toEqual(["/lancar"]);
+    expect(homeFor("FUNCIONARIO")).toBe("/lancar");
   });
-
-  it("financeiro acessa financeiro e clientes, mas não estoque", () => {
-    expect(canAccessPath("FINANCEIRO", "/financeiro/receber")).toBe(true);
-    expect(canAccessPath("FINANCEIRO", "/clientes")).toBe(true);
-    expect(canAccessPath("FINANCEIRO", "/estoque")).toBe(false);
-  });
-
-  it("não confunde prefixos parecidos", () => {
-    expect(canAccessPath("ENTREGADOR", "/pedidosx")).toBe(true); // rota fora de módulo
-    expect(canAccessPath("ENTREGADOR", "/pedidos")).toBe(false);
-  });
-
   it("sem perfil não acessa nada", () => {
-    expect(canAccessPath(undefined, "/")).toBe(false);
+    expect(canAccessPath(undefined, "/lancar")).toBe(false);
   });
 });

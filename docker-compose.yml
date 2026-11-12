@@ -29,6 +29,8 @@ services:
       AUTH_SECRET: ${AUTH_SECRET:?defina AUTH_SECRET}
       AUTH_TRUST_HOST: "true"
       AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      # filiais criadas na primeira subida (separadas por vírgula)
+      SEED_FILIAIS: ${SEED_FILIAIS:-Matriz}
     ports:
       - "127.0.0.1:${APP_PORT:-3000}:3000" # exposto só via Cloudflare Tunnel
 

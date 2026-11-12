@@ -1,5 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
-import { canAccessPath } from "@/lib/roles";
+import { canAccessPath, homeFor } from "@/lib/roles";
 
 // Configuração compatível com o Edge (usada pelo middleware): sem Prisma nem bcrypt.
 export const authConfig = {
@@ -10,11 +10,11 @@ export const authConfig = {
     authorized({ auth, request: { nextUrl } }) {
       const user = auth?.user;
       if (nextUrl.pathname.startsWith("/login")) {
-        return user ? Response.redirect(new URL("/", nextUrl)) : true;
+        return user ? Response.redirect(new URL(homeFor(user.role), nextUrl)) : true;
       }
       if (!user) return false; // redireciona para /login
-      if (!canAccessPath(user.role, nextUrl.pathname)) {
-        return Response.redirect(new URL("/?negado=1", nextUrl));
+      if (nextUrl.pathname !== "/" && !canAccessPath(user.role, nextUrl.pathname)) {
+        return Response.redirect(new URL(homeFor(user.role), nextUrl));
       }
       return true;
     },
