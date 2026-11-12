@@ -29,7 +29,7 @@ services:
       AUTH_SECRET: ${AUTH_SECRET:?defina AUTH_SECRET}
       AUTH_TRUST_HOST: "true"
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "127.0.0.1:${APP_PORT:-3000}:3000" # exposto só via Cloudflare Tunnel
 
 volumes:
   pgdata:

@@ -47,7 +47,12 @@ docker compose --profile app up -d --build
 docker compose exec -e SEED_ADMIN_EMAIL=admin@seudominio -e SEED_ADMIN_PASSWORD=<senha> app node prisma/seed.mjs   # 1ª vez
 ```
 
-O container aplica as migrations pendentes ao iniciar e escuta na porta 3000 — coloque um proxy com HTTPS (Caddy/Nginx) na frente.
+O container aplica as migrations pendentes ao iniciar e escuta em `127.0.0.1:3000`. O acesso externo é feito
+pelo **Cloudflare Tunnel** (`gestao.supergas.com.br`), com HTTPS e sem abrir portas no servidor:
+
+```bash
+sudo cloudflared service install <TOKEN_DO_TUNEL>   # token em Zero Trust → Networks → Tunnels → guara
+```
 
 ## Roadmap
 
